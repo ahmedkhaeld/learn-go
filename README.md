@@ -535,6 +535,146 @@ func main() {
 ```
 
 
+---
+## Arrays
+* Creation
+* Built-in functions
+* working with array
+
+Why do we need them and what are they used for?
+is a very powerful way for us to work with our
+data. Now, another advantage that we have with working with arrays is the way that they're laid out in memory.
+the design of the language that these elements are continous in memory,
+which means accessing the various elements of the array is very, very fast.
+```go
+package main
+
+import "fmt"
+
+func main() {
+	// first way to declare array
+	var Arr [3]int=[3]int {1,2,3}
+	fmt.Printf("Arr: %v\n", Arr)
+	
+	// second way
+	var array [5]int
+	array[0]=2
+	array[1]=3
+	array[2]=4
+	array[3]=8
+	fmt.Printf("array:%v\n", array)
+	
+	// third way
+	grades := [...]int {97,85,93}
+	fmt.Printf("Grades: %v", grades)
+}
+```
+
+```go
+func main() {
+	var students [5]string
+	fmt.Printf("students: %v\n", students)
+	students[0]="lisa"
+	students[1]="ahmed"
+	students[2]="hoda"
+	fmt.Printf("student #1: %v\n", students[1])
+	fmt.Printf("no of Students: %v\n", len(students))
+}
+```
+arrays of arrays
+```go 
+
+func main() {
+	var identityMatix [3][3] int= [3][3]int{ [3]int{1,0,0}, [3]int{0,1,0}, [3]int{0,0,1} }
+	// another way intialize each row indvidually
+	var idMatrix [3][3] int
+	idMatrix[0]=[3]int{1,0,0}
+	idMatrix[1]=[3]int{1,1,1}
+	idMatrix[2]=[3]int{0,0,0}
+	fmt.Printf("Ids1 %v\n", idMatrix)
+	fmt.Printf("ids2 %v\n", identityMatix)
+	
+}
+
+```
+arrays are actually considered values.  When you copy an array, you're actually creating a literal copy
+ So it's not pointing to the same underlying data is pointing to a different set of data, which means it's got to reassign that entire
+length of the array.<br/>
+ they have a fixed size that has to be known at compile time
+ 
+if you're passing arrays into a function, go is going to copy that entire array over.<br/>
+So what do you do if you don't want to have this behavior? idea of pointers. 
+
+here a, b are different sets of array after b copied the a array 
+```go
+
+func main() {
+	a:=[...]int{1,2,3}
+	b:=a 
+	fmt.Println(a)
+	fmt.Println(b)
+	
+}
+```
+here b point to a array values not copying in actual new array
+```go
+
+func main() {
+	a:=[...]int{1,2,3}
+	b:=&a 
+	fmt.Println(a)
+	fmt.Println(b)
+	
+}
+```
+---
+## Slices
+An array has a fixed size. A slice, on the other hand, is a dynamically-sized, flexible VIEW into the elements of an array. 
+
+we can have a very large array and only be looking at a small piece of it.
+
+slices are naturally what are called reference types.So they refer to the same underlying data. A slice does not store any data, it just describes a section of an underlying array.
+
+ we see that A and B are actually pointing to the same underlying array.
+ 
+  if one of those slices changes the underlying data, it could have an impact somewhere else in your application. 
+
+```go
+
+func main() {
+	a:=[]int{1,2,3}
+	b:=a 
+	b[1]=5
+	
+	
+	fmt.Println(a)
+	fmt.Println(b)
+	fmt.Printf("length: %v\n", len(a))
+	fmt.Printf("capacity: %v\n", cap(a))
+}
+```
+
+```go
+func main() {
+	a:=[]int{1,2,3, 4,5,6,7,8,9,10}
+	
+	b:=a[:]          // slice of all elements  
+	c:=a[3:]         //slice from the 4th element to end
+	d:=a[:6]         // slice from 0element to 5th
+	e:=a[3:6]       // slice  4th, 5th, 6th 
+	
+	a[5]=45        // this modification affect all the slices
+	
+	fmt.Println(a)
+	fmt.Println(b)
+	fmt.Println(c)
+	fmt.Println(d)
+	fmt.Println(e)
+	
+}
+```
+
+
 
 
 
