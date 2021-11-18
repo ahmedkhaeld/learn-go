@@ -673,13 +673,193 @@ func main() {
 	
 }
 ```
+capacity and length of slice according its position to the underlying array endpoint
+```go
+package main
+
+import "fmt"
+
+func main() {
+	a := []int{1, 2, 3, 4, 5, 6, 7}
+	fmt.Println(cap(a))
+	b := a[:5]
+	fmt.Println(len(b))
+	fmt.Println(cap(b))
+	b1 := b[3:4]
+	fmt.Println(b1)
+	fmt.Println(len(b1)) // length of slice how many element slice has
+	fmt.Println(cap(b1)) // capacity of slice how many element i can have from my start point to the underlying array end point
+	// here b1 start point is 4 and the underlying array end point is 7 so cap is 4 
+
+}
+```
+use make function to create slice
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	// make built-in function to create a sllice take 2 or 3 args
+	// here 1st is the type, the 2nd is the length of the slice, the 3rd is the capacity of the underlying array
+	a := make([]int, 3)
+	fmt.Println(a)
+	fmt.Printf("length %v\n", len(a))
+	// to add an element to slice use append func, this add number 2 to the slice
+	a = append(a, 2)
+	fmt.Println(a)
+	fmt.Printf("length %v\n", len(a))
+
+	//output:
+	/*
+		[0 0 0]
+		length 3
+		[0 0 0 2]
+		length 4
+	*/
+
+}
+
+```
+re-slice a slice to extend itself
+```go
+package main
+
+import "fmt"
+
+func main() {
+	a := [5]int{1, 2, 3, 4, 5}
+	fmt.Println(a)
+	fmt.Printf("length %v\n", len(a))
+	fmt.Printf("capacity %v\n", cap(a))
+	s := a[1:3]
+	fmt.Println(s)
+	fmt.Printf("length %v\n", len(s))
+	fmt.Printf("capacity %v\n", cap(s))
+
+	// here re-slice the s slice to extend it to the last element of the underlying array which is a
+	fmt.Println(s[:cap(s)])
+	fmt.Printf("capacity %v\n", cap(s))
+
+}
+```
 
 
 
+* Important note
+if S slice has a certain nuber of space and we used them all, to append a new element to S, we have to copy S into double size for so the new element can be addded
+```go
+package main
+
+import "fmt"
+
+func main() {
+	a := [...]int{3, 5, 8, 10, 12}
+	fmt.Println(a)           //[3 5 8 10 12]
+	fmt.Println(cap(a))     //5
+	
+	b := a[:]
+
+	b = append(b, 3)
+	fmt.Println(b)          //[3 5 8 10 12 3]
+	fmt.Println(cap(b))     //10
+
+}
+```
+another example
 
 
+```go
+package main
+
+import "fmt"
+
+func main() {
+	a := []int{}
+	fmt.Println(a)
+	fmt.Printf("len:%v\n", len(a))
+	fmt.Printf("cap:%v\n", cap(a))
+	//[]
+	//len:0
+	//cap:0
+	
+	a=append(a,1)
+	fmt.Println(a)
+	fmt.Printf("len:%v\n", len(a))
+	fmt.Printf("cap:%v\n", cap(a))
+	//[1]
+	//len:1
+	//cap:1
+	
+	a=append(a,2,3,4,5)
+	fmt.Println(a)
+	fmt.Printf("len:%v\n", len(a))
+	fmt.Printf("cap:%v\n", cap(a))
+	//[1 2 3 4 5]
+	//len:5
+	//cap:6
+}
+
+```
+> when the sequence is appending, here is what is happening, a double itself so the sequence 2,3,4,5 starts to pool its elements, so 2,3 append 
+> but still 4, 5 , so a double it size again which is 2 . now after all values entered the new slice is 6 capacity 
 
 
+* concatenate two slices togther
+you can't do that directly, use ... to spread the the second slice
+```go
+package main
+
+import "fmt"
+
+func main() {
+	var s []int = []int{9, 5, 3}
+
+	s = append(s, []int{2, 3, 4}...)
+	printSlice(s)
+}
+
+func printSlice(s []int) {
+	fmt.Printf("len=%d cap=%d %v\n", len(s), cap(s), s)
+}
+```
+* pop elements from slice
+```go
+package main
+
+import "fmt"
+
+func main() {
+	var s []int = []int{9, 5, 3}
+	// remove first element
+	b := s[1:]
+	fmt.Println(b)
+	//[5 3]
+
+	// remove last element
+	z := s[:len(s)-1]
+	fmt.Println(z)
+	//[9 5]
+
+}
+```
+remove the middle element from a slice
+we could append first half until middle element with second half after middle element
+```go
+package main
+
+import "fmt"
+
+func main() {
+	var s []int = []int{9, 5, 3, 4, 5}
+	var middle = len(s) / 2
+
+	b := append(s[:middle], s[middle+1:]...)
+	fmt.Println(b)
+
+}
+```
 
 
 
