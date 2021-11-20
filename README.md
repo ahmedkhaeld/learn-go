@@ -1109,6 +1109,8 @@ type Bird struct {
 func main() {
 
 	b := Bird{}
+	//or
+	var b Bird= Birde{} 
 	b.Name = "Emu"
 	b.Origin = "Austerial"
 	b.SpeedKPH = 48
@@ -1139,12 +1141,98 @@ type Animal struct {
 	Origin string
 }
 ```
+* Demo to show how struct are value typed and how using pointer with them
+
+1. we can have a bunch of different objects of the same struct with different values
 
 
+```go
+package main
 
+import "fmt"
 
+type Point struct {
+	x int32
+	y int32
+}
 
+//take refeerenc of Point Struct to have access to it for some modificatin
+func changeX(ptr *Point) {
+	ptr.x = 100
+}
 
+func main() {
+
+	p1 := &Point{x: 0, y: 4}
+	fmt.Println(p1)
+	changeX(p1)
+	fmt.Println(p1)
+
+}
+```
+
+* struct with metods
+
+```go
+package main
+
+import "fmt"
+
+type Student struct {
+	name   string
+	grades []int
+	age    int
+}
+
+// method for student struct
+func (s Student) getStudentAge() int {
+	return s.age
+}
+
+// use a pointer to modify student age field
+func (s *Student) setStudentAge(age int) {
+	s.age = age
+}
+
+func (s Student) getAverageGrades() float32 {
+
+	sum := 0
+	for _, v := range s.grades {
+		sum += v
+	}
+	return float32(sum) / float32(len(s.grades))
+}
+
+func (s Student) getMaxGrade() int {
+	max := 0
+	for _, v := range s.grades {
+		if max < v {
+			max = v
+		}
+	}
+	return max
+
+}
+
+func main() {
+	// s1 can access methods of student struct
+	s1 := Student{
+		name:   "hamo",
+		grades: []int{60, 95, 83, 91, 82},
+		age:    25,
+	}
+
+	fmt.Println(s1.getStudentAge()) //25
+	s1.setStudentAge(26)
+	fmt.Println(s1.getStudentAge()) //26
+	average := s1.getAverageGrades()
+	fmt.Println(average) //82.2
+
+	max := s1.getMaxGrade()
+	fmt.Println(max) //
+
+}
+```
 
 
 
