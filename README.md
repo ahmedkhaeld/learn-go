@@ -861,18 +861,289 @@ func main() {
 }
 ```
 
-
-
-
-
-
-
-
-
-
-
-
+---
+ ## Maps
+ * what arey they?
+ * creating
+ * manipulation
  
+ So what maps provides us is a very flexible data type. When we're trying to map one key type over to one value type.
+```go
+package main
+
+import "fmt"
+
+func main() {
+	statePopulation := map[string]int{
+		"California": 39250017,
+		"Texas":      27862596,
+		"Florida":    20612439,
+		"New York":   19745289,
+		"Ohio":       11614373,
+	}
+
+	fmt.Println(statePopulation)
+}
+```
+slice can not be a key type for maps, but arrays can 
+
+create a map use make built-in function
+```go
+package main
+
+import "fmt"
+
+func main() {
+	fruits := make(map[string]string)
+	fruits = map[string]string{
+		"orange": "orange",
+		"apple":  "green",
+		"banana": "yellow",
+	}
+
+	fmt.Println(fruits)
+}
+```
+* Maps manipulation
+* manipulation maps happens almost instantly, access, changing , deleting values, no matter how big the map this will happen very fast
+the order in the map is not provided, keys are stored with no ordering
+```go
+package main
+
+import "fmt"
+
+func main() {
+	statePopulation := map[string]int{
+		"California": 39250017,
+		"Texas":      27862596,
+		"Florida":    20612439,
+		"New York":   19745289,
+		"Ohio":       11614373,
+		"Brookln":    116143276,
+	}
+
+	// add new pairs of key and value
+	statePopulation["Georgia"] = 19745289
+	fmt.Println(statePopulation)
+
+	// access value of a key from maps
+	fmt.Println(statePopulation["Ohio"])
+
+	// delete value of a key from maps
+	delete(statePopulation, "Ohio")
+	fmt.Println(statePopulation)
+
+	//note, about deleting a key, the value is modified to the default value of key type zero for int, this indicates that specific key has no value
+	// to be sure that the key is not registered use the flag 'ok' to make sure the key was not registered anyway or deleted
+	_, ok := statePopulation["oho"]
+	fmt.Println(ok) //  false
+
+	// length of maps
+	fmt.Println(len(statePopulation))
+}
+```
+when you have multiple assignments to map, the underlying data is passign by REFRENCE, which means, manipulating one variable that points to the map,
+is gonna has impact on the other ones
+```go
+package main
+
+import "fmt"
+
+func main() {
+	statePopulation := map[string]int{
+		"California": 39250017,
+		"Texas":      27862596,
+		"Florida":    20612439,
+		"New York":   19745289,
+		"Ohio":       11614373,
+		"Brookln":    116143276,
+	}
+
+	sp := statePopulation
+	delete(sp, "Ohio")
+	//this will delete Ohio from sp and statePopulation
+	fmt.Println(sp)
+	fmt.Println(statePopulation)
+}
+```
+---
+## Struct
+* Collections of disparate data types that describe a single concept
+* keyed by named fields
+* normally created as types, but anonymous structs are allowed
+* structs are value types
+* no inheritance, but can use composition via embedding
+* tags can be added to struct fields to describe the field
+
+what the struct type does is it gathers information together that are related to one
+concept, in this case, a doctor. And it does it in a very flexible way. Because we don't
+have to have any constraints on the types of data that's contained within our struct,
+we can mix any type of data together. And that is the true power of a struct. 
+
+of the other collection types we've talked about have had to have consistent types. So
+arrays always have to store the same type of data slices have the same constraint. And
+we just talked about maps and how their keys always have to have the same type. And their
+values always have to have the same type within the same map. 
+
+* here is how to create a struct with three diff type. int, string, slice
+```go
+package main
+
+import "fmt"
+
+type Doctor struct {
+	number     int
+	actorName  string
+	companions []string
+	episodes   []string
+}
+
+func main() {
+	aDoctor := Doctor{
+		number:    3,
+		actorName: "ahmed khalid",
+		companions: []string{
+			"hamo",
+			"hoda",
+		},
+	}
+
+	fmt.Println(aDoctor)
+	
+	//acces field of struct
+	fmt.Println(aDoctor.actorName)
+	
+	// access fields like a slice, e.g second element of slice
+	fmt.Println(aDoctor.companions[1])
+
+}
+```
+> note:<br/>
+> naming rules for struct follows the same as go other variable
+> struct starts with upper case letter in the main package is exported to other, the struct fields must be upper case also if it is required to make them accessible to other packages
+
+> note: it is better approach to user field names syntax
+>advantage, if I don't have any information about the episodes at this point in my program,
+I actually can ignore the fact that that field exists. And what this means is I changed the
+underlying struct without changing the usage at all, which makes my application a little
+bit more robust and change proof
+
+#### anonymous struct
+ So instead of setting up a type, and saying, doctor, and that's going to be a struct,
+and that's going to have a single field called name, that's going to take a string. We're
+condensing all of that into this single declaration
+```go
+package main
+
+import "fmt"
+
+func main() {
+	aDoctor := struct{ name string }{name: "hamo"}
+	fmt.Println(aDoctor)
+
+}
+```
+when are you going to use this,in situations where you need to structure some data in a way that you don't have in
+a formal type. But it's normally only going to be very short lived. So you can think about
+if you have a data model that's coming back in a web application, and you need to send
+a projection or a subset of that data down to the client, you could create an anonymous
+struct in order to organize that information.
+So you don't have to create a formal type that's going to be available throughout your
+package for something that might be used only one time.
+
+ >unlike maps, **structs are value types** .unlike maps, and slices, these
+are referring to independent datasets. So when you pass a struct around in your application,
+you're actually passing copies of the same data around.
+```go
+package main
+
+import "fmt"
+
+func main() {
+	aDoctor := struct{ name string }{name: "hamo"}
+	fmt.Println(aDoctor.name) // hamo
+	anotherDoctor := aDoctor
+	anotherDoctor.name = "hoda"
+	fmt.Println(aDoctor.name) //hamo, nothing changed, because anotherDoctor is inependent sturct
+
+}
+```
+just like with arrays, if we do want to point to the same underlying data, we can use that address of operator. And when we run this, we have in fact, both variables
+pointing to the same underlying data.
+```go
+anotherDoctor :=&aDoctor
+```
+#### embeding in struct
+go language doesn't support traditional object oriented principles.
+
+how am I going to create my program if I don't
+have inheritance available? Well, let me show you what go has, instead of an inheritance
+model. It uses a model that's similar to inheritance called composition. So where inheritance is
+trying to establish the is a relationship.
+
+So if we take this example here, if we were
+in a traditional object oriented language, we wouldn't want to say that a bird is an
+animal, and therefore a bird has a name a bird has an origin, a bird has also bird things
+like its speed, and if it can fly or not
+
+it supports composition through what's called embedding.
+So right now we see that animal
+and bird are definitely independent structs, there's no relationship between them. However,
+I can say that a bird has animal like characteristics by embedding an animal struct
+```go
+package main
+
+import "fmt"
+
+type Animal struct {
+	Name   string
+	Origin string
+}
+
+type Bird struct {
+	Animal
+	SpeedKPH float32
+	CanFly   bool
+}
+
+func main() {
+
+	b := Bird{}
+	b.Name = "Emu"
+	b.Origin = "Austerial"
+	b.SpeedKPH = 48
+	b.CanFly = false
+	fmt.Println(b)
+	
+	// or this way
+	b := Bird{
+		Animal: Animal{Name: "Emu", Origin: "Australia"},
+		SpeedKPH:48,
+		CanFly:false,
+	}
+	fmt.Println(b)
+
+}
+```
+#### tag
+ in order to describe some specific information
+about this name field. So let's say for example, that I'm working with some validation framework.
+So let's just say that I'm working within a web application, and the user is filling
+out a form and two of the fields are providing the name and the origin. And I want to make
+sure that the name is required and doesn't exceed a maximum length
+
+```go
+
+type Animal struct {
+	Name   string ` required max:"100" `
+	Origin string
+}
+```
+
+
+
+
+
 
 
 
