@@ -1234,24 +1234,198 @@ func main() {
 }
 ```
 
+--- 
+## Flow Control
+#### For
+Go has only one looping construct, the for loop.
+```go
+func main() {
+	sum := 0
+	for i := 0; i < 10; i++ {
+		sum += i
+	}
+	fmt.Println(sum)
+}
+```
+The init and post statements are optional.
+
+#### For is Go's "while"
+```go
+func main() {
+	sum := 1
+	for sum < 1000 {
+		sum += sum
+	}
+	fmt.Println(sum)
+}
+```
+#### break statment
+```go
+
+func main() {
+	i:=0
+	for{
+		fmt.Println(i)
+		i++
+		if i==5{
+			break
+		}
+	}
+}
+```
+if i equal to five, then we are gonna break out from the for loop
+
+break, breaks out from the closest for loop in a nested for loop,
+but if in a certain condition is met i want to break out from the parent loop, we can use a Lable to the parent for loop, 
+
+```go
+func main() {
+Loop:
+	for i := 0; i < 10; i++ {
+		for j := 0; j < 3; j++ {
+			fmt.Println(i * j)
+			if i*j >= 3 {
+				break Loop
+			}
+
+		}
+	}
+}
+```
+> Loop, where it is put, it describe where i want to break out
+
+#### loop through collections 
+using rang key word to loop maps, slices, arrays. and strings
+```go
+func main() {
+	s := []int{1, 3, 5, 9}
+	for key, value  := range s {
+		fmt.Println(k, v)
+	}
+}
+```
+loop through string
+```go
+func main() {
+	s := "hello go !"
+	for k, v := range s {
+		fmt.Println(k, string(v)) // values are casting to string
+	}
+}
+```
+#### continue
+is used to skip a condition execution when it is true
+<br/>like in a for loop, when looping i want to skip certain conditon 
+but, keep looping until other iterations are finished
+```go
+func main() {
+	for i := 0; i < 10; i++ {
+		if i%2 == 0 {
+			continue
+		}
+		fmt.Println(i)
+	}
+}
+
+```
+> here i want to skip even number, only print the odd numbers
+
+#### If
+```go
+func sqrt(x float64) string {
+	if x < 0 {
+		return sqrt(-x) + "i"
+	}
+	return fmt.Sprint(math.Sqrt(x))
+}
+```
+If with a short statement
+```go
+func pow(x, n, lim float64) float64 {
+	if v := math.Pow(x, n); v < lim {
+		return v
+	}
+	return lim
+}
+```
+
+#### Switch
+break statement that is needed at the end of each case is provided automatically in Go. Another important difference is that Go's switch cases need not be constants, and the values involved need not be integers.
 
 
+Switch without a condition is the same as switch true.
+This construct can be a clean way to write long if-then-else chains.
 
+a very simple way
+to compare one variable to multiple possible values against variable
+```go
 
+func main() {
+	switch 3 {
+	case 1, 5, 10:
+		fmt.Println("one, five, and ten")
+	case 2, 4, 6:
+		fmt.Println("two, four, and six")
+	default:
+		fmt.Println("another number")
+	}
+```
+> be aware of is the test cases do have to be unique.
 
+ in our switch, we can use an initializer<br/>
+  the initializer doesn't have to generate a Boolean result,
+```go
+func main() {
+	switch i := 2 + 3; i {
+	case 1, 5, 10:
+		fmt.Println("one, five, and ten")
+	case 2, 4, 6:
+		fmt.Println("two, four, and six")
+	default:
+		fmt.Println("another number")
+	}
+}
+```
 
+* tagless syntax
+is arguably more powerful than the tag syntax, although it
+is a little bit more verbose. So in this case, on line eight, I'm establishing a variable
+which is going to come from some other logic in my application. And then I've got the switch
+statement that standing all alone and immediately opening a curly brace.
 
+```go
+func main() {
+	i := 10
+	switch {
+	case i <= 10:
+		fmt.Println("less than or equal to ten")
+	case i <= 20:
+		fmt.Println("less than or equal to twenty")
+	default:
+		fmt.Println("greater than twenty")
+	}
+}
+```
 
+* type switch 
+```go
+func main() {
+	var i interface{} = 1
+	switch i.(type) {
+	case int:
+		fmt.Println("i is an integer")
+	case float64:
+		fmt.Println("i is a float64")
+	case string:
+		fmt.Println("i is a string")
+	default:
+		fmt.Println(" anothr type")
 
+	}
+}
+```
 
-
-
-
-
-
-
-
-
+---
 
 
 
