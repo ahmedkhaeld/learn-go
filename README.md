@@ -1427,18 +1427,450 @@ func main() {
 
 ---
 
+### Defer
+how we can actually invoke a function, but delay its execution to some future point in time.
+```go
+func main() {
+	fmt.Println("start")
+	fmt.Println("middle")
+	fmt.Println("end")
+
+}
+```
+> In a normal go, application control flows from the top to the bottom of any function that we call.
+
+do if we want to defer the execution one of these statements is proceeded with the defer keyword. 
+
+A defer statement pushes a function call onto a list. The list of saved calls is executed after the surrounding function returns. Defer is commonly used to simplify functions that perform various clean-up actions.
+
+```go
+func main() {
+	fmt.Println("start")
+	defer fmt.Println("middle")
+	fmt.Println("end")
+
+}
+//output
+//start end middle
+```
+the way the defer keyword works in go, is that it actually executes any functions
+that are passed into it after the main function finishes its final statement, but before it
+actually returns. So the way this main function is executing is its calling start and
+it's printing out start, then it recognizes that it has a deferred function to call and
+then it prints out end. And then the main function exits now when go recognizes that
+that function exits, it looks to see if there are any deferred functions to call. And since
+we have one, and then goes ahead and calls that, so deferring doesn't move it to the
+end of the main function, and actually moves it after the main function. But before the
+main function returned. 
 
 
 
+```go
+func main() {
+	defer fmt.Println("start")
+	defer fmt.Println("middle")
+	defer fmt.Println("end")
+	// end middle start
+
+}
+```
+> if we put the deferred keyword in front of all of these
+statements, then we'll actually see an interesting behavior. Because the deferred functions are
+actually executed in what's called LIFO order or last in first out.
+
+>  And this makes sense, because often we're going to use the deferred keyword to close out resources. And
+it makes sense that we close resources out in the opposite order that we open them, because
+one resource might actually be dependent on another one.
+
+
+* For example, let’s look at a function that opens two files and copies the contents of one file to the other:
+
+```go
+func CopyFile(dstName, srcName string) (written int64, err error) {
+    src, err := os.Open(srcName)
+    if err != nil {
+        return
+    }
+
+    dst, err := os.Create(dstName)
+    if err != nil {
+        return
+    }
+
+    written, err = io.Copy(dst, src)
+    dst.Close()
+    src.Close()
+    return
+}
+```
+This works, but there is a bug. If the call to os.Create fails, the function will return without closing the source file. This can be easily remedied by putting a call to src.Close before the second return statement, but if the function were more complex the problem might not be so easily noticed and resolved. By introducing defer statements we can ensure that the files are always closed
+
+```go
+func CopyFile(dstName, srcName string) (written int64, err error) {
+    src, err := os.Open(srcName)
+    if err != nil {
+        return
+    }
+    defer src.Close()
+
+    dst, err := os.Create(dstName)
+    if err != nil {
+        return
+    }
+    defer dst.Close()
+
+    return io.Copy(dst, src)
+}
+```
+
+another example
+```go
+package main
+
+import (
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+)
+
+func main() {
+	res, err := http.Get("http://www.google.com/robots.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer res.Body.Close()
+	robots, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%s\n", robots)
+
+}
+```
+ a program that's going to make some resource requests through the HTTP package.<br/>using the Get function from the
+HTTP package in order to request the robots dot txt file from google.com<br/>we're going
+to get a response and an optional error. And we're going to check to see if that error
+is nil. And if it's not, then we're going to log that out and exit our application.<br/>If err is nil, and we got a good response. So then we're going to use the read all function
+from the IO util package, what that'll do is that'll take in a stream, and that'll parse
+that out to a string of bytes for you to work with.<br/> the defer keyword can
+help with is handling this Body.close.<br/>using defer it allows you to associate the opening of a resource and the closing
+of the resource right next to each other.
+
+*
+```go
+func main() {
+	a := "start"
+	defer fmt.Println(a)
+	a = "end"
+
+}
+```
+>  we're going to get the value "start"
+printed out. And the reason for that is when you defer a function like this, it actually
+takes the argument at the time, the defer is called not at the time the called function
+is executed.
+
+## panic
+there are some things that
+get a go application into a situation where it cannot continue and that is considered
+exceptional. is going to be panic, because it can't figure out what to do.
+```go
+func main() {
+	fmt.Println("start")
+	panic("some went Wrong!")
+	fmt.Println("end")
+
+}
+```
+* here we are trying to access a tcp port 8080 to serve our web app
+```go
+package main
+
+import (
+	"net/http"
+)
+
+func main() {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("hello Go!"))
+	})
+
+	err := http.ListenAndServe(":8080", nil)
+	if err != nil {
+		panic(err.Error)
+	}
+
+}
+```
+when an err might happens, like when we try to access an already used port, so we measured it must panic to block this try
+
+It's up to you, as a
+developer to decide whether that's a problem or not to panic over it
+
+
+So
+
+what are we going to do in the situation that our application is panicking. And we can get
+ourselves to a situation where we can recover the application. So panics don't have to be
+fatal. They just are, if we panic all the way up to the go runtime, and the go runtime doesn't know what to do with a panicing application. And so it's going
+to kill it.
+
+```go
+func main() {
+	fmt.Println("start")
+	defer fmt.Println("this was deferred")
+	panic("something bad happend")
+	fmt.Println("end")
+}
+```
+> start <br/>
+this was deferred <br/>
+panic: something bad happend <br/>
+
+>we get this was deferred
+printing out and then the panic happens. And this is really important, because panics happen
+after deferred statements are executed.
+
+> So the order of execution is we're going to execute
+our main function, then we're going to execute any deferred statements, then we're going
+to handle any panics that occur. And then we're going to handle the return value.
+
+>the first thing that's important is
+that the first statements that are going to close resources are going to succeed even
+if the application panics. So if somewhere up the call stack, you recover from the panic,
+you don't have to worry about
+resources being left out there and left open. So any deferred calls to close resources are
+still going to work even if a function panics.
+
+
+* recover from a panic
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+)
+
+func main() {
+	fmt.Println("starting...")
+	panicker()
+	fmt.Println("Ended")
+
+}
+
+func panicker() {
+	fmt.Println("about to panic")
+	// anonymous function
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println("Error: ", err)
+		}
+	}() // these parenthesis are making that anon function to execute
+
+	panic("something went wrong")
+	fmt.Println("done panicking")
+}
+```
+>output<br/>
+>starting... <br/>
+about to panic<br/>
+2021/11/22 11:43:29 Error:  something went wrong<br/>
+Ended<br/>
+
+>And an anonymous function
+is simply a function that doesn't have a name. So nothing else can call this, this is defined
+at one point, and we can call it exactly one time, 
+
+>an important thing to know about the defer statement, that it doesn't take a function itself, it actually takes a function call. 
+
+So what the recover function() is going to do is it will return nil if the application isn't panicking.
+But if it isn't nil, then it's going to return the error that actually is causing the application
+to panic. 
+
+we've got the main function, that's going to be
+our application entry point, of course. And then we've got this other function called
+panicker. And all this thing does is it's going to print on the line that says it's
+about the panic, and then it's going to panic. And it's going to go ahead and recover from
+that panic using that deferred function
+
+ we get the start line printed out, like you
+would expect, we see the about the panic string print out, then we panic, something bad happened,
+we go into our recover loop, because we're not going to execute this because our application
+panic. And so our panicker function is going to stop execution right there and execute
+any deferred functions. And inside of that deferred function, we call recover. So in
+that recover, we're going to log out the fact that we have that error, and we're going to
+log that error message out that we see here. But then in the main function execution continues.
+
+the function that actually recovers,
+still stops execution, because it's in a state where it can no longer reliably continue to
+function. And so it makes sense for it to stop doing whatever it was trying to do. However,
+functions higher up the call stack, those functions that call the function that recovered
+from the panic, they are still presumably in a situation where they can continue, because
+you recover function said that your application is in a state working to continue to execute.
+
+this is a little bit limiting as well, because in order to determine what that error
+is, you actually have to call the recover function, which basically means that you're
+saying that you're going to deal with it. So what happens if you get that error, and
+you realize that this isn't something that you can deal with? Well, in that case, what
+you're going to do is repanicing the application. So if you're in a situation where you're
+trying to recover from a panic, and you realize you can't handle it, you can feel free to
+re throw that panic, and the further management of that panic, higher up the call stack
+
+---
+ ## Pointers
+ * creating pointers
+ * dereferencing pointers
+ * the new function
+ * working with nil
+ * types with internal pointers
+ 
+ a variable holds two different informations, the address where he is located, and the value in that location
+
+> creating a pointer to reference a memeory address 
+```go
+func main() {
+	var a int = 42
+	var b *int = &a // declare pointer b to point to the address of a, so be is holding an address 
+	fmt.Println(&a, b) // here &a accesss its address in memory, b here already assigned that address, so both have same address 
+
+}
+```
+> * before datatype means it declares a pointer to a memory address, like *int
+>  * before variable means, access the value, like *b , it access the value
+
+```go
+
+func main() {
+	var a int = 42
+	var b *int = &a // b is a pointer to an address
+	fmt.Println(&a) // &a is access address of a
+
+	fmt.Println(*b) // * is dereferencing the pointer to access the value of a
+
+	//changing the value in the memory location, where a is located
+	*b = 14
+	fmt.Println(a, *b)
+
+}
+```
+
+```go
+func main() {
+	a := [3]int{1, 2, 3}
+	b := &a[0] // b has the address of the first byte
+	c := &a[1] // c has the address of the second byte
+	fmt.Printf("%v %p %p\n", a, b, c)
+
+}
+```
+> [1 2 3] 0xc000014150 0xc000014158
 
 
 
+```go
+func main() {
+	// ms is an object pointer that holds the address of myStruct , and it intialize the object with 52 value 
+	var ms *myStruct = &myStruct{foo: 52}
+	fmt.Println(ms)
+}
+
+type myStruct struct {
+	foo int
+}
+```
+> &{52} this the address
+
+* intialize a myStruct object with the new keyword
+```go
+func main() {
+	var ms *myStruct
+	ms = new(myStruct)
+	fmt.Println(ms)
+}
+
+type myStruct struct {
+	foo int
+}
+```
+> &{0}
+>  we can't use the object initialization syntax,
+we're just going to be able to initialize an empty object. 
+> the zero value of a pointer is nil,  the pointer that we don't intialize, it's going to be intialized to nil
+> So this is very important to check in your applications. Because if you're accepting pointers as arguments,
+it is best practice to see if that pointer is a nil pointer. Because if it is, then you're
+going to have to handle that in a different way.
 
 
+* how do we get to the underlying field of struct using a pointer
+using a dereferencing  (*ms).foo  is equal to ms.foo straight forward no need to * between parentheses
 
+> accessing the struct field to set its value after intializing myStruct using new 
+```go
 
+func main() {
+	var ms *myStruct
+	ms = new(myStruct)
+	ms.foo = 60
+	fmt.Println(ms.foo)
+}
 
+type myStruct struct {
+	foo int
+}
+```
+> 60
 
+* how go handles variables when they're assigned one to another.
+
+1. arrays to arrays
+as we know arrays make copies to the other variable
+```go
+
+func main() {
+	// a is an array
+	a := [3]int{1, 2, 3}
+	// b is pointing to same address as a, we must use pointer because arrays copying the values not the address
+	b := &a
+	fmt.Println(a, b)
+	a[1] = 8
+	fmt.Println(a, b)
+}
+```
+>[1 2 3] &[1 2 3] <br/>
+[1 8 3] &[1 8 3]
+> now any change in a affect b
+
+2. slice are reference to the underlying array
+so slice to slice means both share the pointer to the same underlying array. no need to use pointer
+```go
+func main() {
+	// a is an array
+	a := []int{1, 2, 3}
+	// b is pointing to same address of slice a
+	b := a
+	fmt.Println(a, b)
+	a[1] = 8
+	fmt.Println(a, b)
+}
+```
+>[1 2 3] &[1 2 3] <br/>
+[1 8 3] &[1 8 3]
+
+3. maps to maps
+same as slice the referencing not copying
+```go
+func main() {
+	a := map[string]string{"foo": "bar", "baz": "buz"}
+	b := a
+
+	fmt.Println(a, b)
+	a["foo"] = "woo"
+	fmt.Println(a, b)
+}
+```
 
 
 
