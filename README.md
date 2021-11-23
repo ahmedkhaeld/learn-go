@@ -1808,12 +1808,29 @@ going to have to handle that in a different way.
 using a dereferencing  (*ms).foo  is equal to ms.foo straight forward no need to * between parentheses
 
 > accessing the struct field to set its value after intializing myStruct using new 
+
+new() in golang doesn't initialize memory but it only zeroes the value and return the pointer,In other words it returns a pointer to a newly allocated zero value of type T.
+```go
+func main() {
+
+	// new here create a m pointer of type map[string]int
+	m := new(map[string]int)
+	// intialize the map
+	m = &map[string]int{
+		"apple": 5,
+	}
+	v := *m
+	v["cat"] = 1
+	fmt.Println(v)
+	fmt.Println(*m)
+}
+```
 ```go
 
 func main() {
-	var ms *myStruct
-	ms = new(myStruct)
-	ms.foo = 60
+	
+	ms := new(myStruct) // new creates a pointer to myStruct
+	ms.foo = 60 // this line equal to (*ms).foo=60
 	fmt.Println(ms.foo)
 }
 
@@ -1859,6 +1876,39 @@ func main() {
 >[1 2 3] &[1 2 3] <br/>
 [1 8 3] &[1 8 3]
 
+* using new keyword with slice to intialize a pointer s
+```go
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	s := new([]string)
+	fmt.Printf("length of string is %d and capacity is %d \n", len(*s), cap(*s))
+
+	*s = append(*s, "test") //since length and capacity is 0 append function creates a new backing array and assigns to slice
+	fmt.Printf("length of string after append is %d and capacity is %d\n", len(*s), cap(*s))
+
+	*s = append(*s, "test1")
+	fmt.Printf("length of string after append is %d and capacity is %d\n", len(*s), cap(*s))
+
+	*s = append(*s, "test2")
+	fmt.Printf("length of string after append is %d and capacity is %d\n", len(*s), cap(*s))
+
+	fmt.Println(s)
+}
+```
+```
+output
+length of string is 0 and capacity is 0 
+length of string after append is 1 and capacity is 1
+length of string after append is 2 and capacity is 2
+length of string after append is 3 and capacity is 4
+&[test test1 test2]
+```
+
 3. maps to maps
 same as slice the referencing not copying
 ```go
@@ -1872,28 +1922,410 @@ func main() {
 }
 ```
 
+---
+## Functions
+* basic syntax 
+* parameters
+* return values
+* anonymous functions
+* functions as types ... how functions in go are first class citizens and can be passed around like any other variable
+* methods
+
+
+```go
+func main() {
+	sayGreeting("Hello", " hamo")
+}
+
+func sayGreeting(greeting, name string) {
+	fmt.Println(greeting, name)
+}
+```
+* passing parameters as value types
+passing in the variable by value. So that means that the go runtime is going to copy the data that's in this variable, since it copies, it shouldn't have
+affect on other copies when it changes
+```go
+func main() {
+	greeting := "hello"
+	name := "hamo"
+	sayGreeting(greeting, name)
+	fmt.Println(greeting, name)
+
+}
+
+func sayGreeting(greeting, name string) {
+	fmt.Println(greeting, name)
+	name = "hoda"
+	fmt.Println(greeting, name)
+}
+```
+```
+output
+hello hamo
+hello hoda
+hello hamo
+```
+
+* passing parameters as pointer types
+instead of working with a copy of the variable, we're working with a pointer to the variable. <br/>
+ we see that we have in fact, change the variable not only in the scope of the function, but in the calling
+scope as well. So by passing in a pointer, we have in fact manipulated that parameter that we passed in.
+```go
+func main() {
+	greeting := "hello"
+	name := "hamo"
+	sayGreeting(&greeting, &name)
+	fmt.Println(greeting, name)
+
+}
+
+func sayGreeting(greeting, name *string) {
+	fmt.Println(*greeting, *name)
+	*name = "hoda"
+	fmt.Println(*greeting, *name)
+}
+```
+```
+output
+hello hamo
+hello hoda
+hello hoda
+```
+*  why would you want to do this? 
+>  a lot of times our functions do need to act on the parameters that are passed into them. And so passing in pointers is really the only way to do that.
+> The other reason is passing in a pointer is often much, much more efficient than passing in a whole value. if you're passing in a large data structure,
+then passing in the value of that data structure is going to cause that entire data structure
+to be copied every single time. 
+
+
+* variadic paramters
+```go
+func main() {
+	sum(" The sum", 1, 3, 5, 8, 6)
+
+}
+
+func sum(msg string, values ...int) {
+	fmt.Println(values)
+
+	result := 0
+	for _, v := range values {
+		result += v
+	}
+
+	fmt.Println(result)
+}
+```
+```
+output
+[1 3 5 8 6]
+23
+```
+passing in the numbers one through five. Now, I'm not receiving five
+variables here, instead, I've got one variable here, and I've preceded its type with these
+three dots here. So what that's done is that's told the go runtime to take in all of the
+last arguments that are passed in, and wrap them up into a slice that has the name of
+the variable that we have.So since it's going to act like a slice, we can use
+a for loop and range over those values. 
+
+
+* using return type 
+it's very useful to be able to use our functions to do some
+work, and then return a result back to the calling function.
+```go
+func main() {
+	s := sum(1, 3, 5, 8, 6)
+	fmt.Println("the sum is", s)
+
+}
+
+func sum(values ...int) int {
+	fmt.Println("values to be summed", values)
+
+	result := 0
+	for _, v := range values {
+		result += v
+	}
+
+	return result
+}
+```
+instead of printing the message in the
+sum function, we're returning the result out. in the main function, I can catch that return value by declaring a variable and setting it equal to the result of this function. it's just going to generate the result and return it back to the caller.
+
+
+*_ return a local variable as a pointer_
+So in our previous example, when we return that result, go actually copied that result to another variable, and that's what got assigned.
+
+instead of returning the result, I'm returning the address of the result.
+```go
+func main() {
+	// s is now a pointer, becuase the return type of the sum is an address(pointer)
+	s := sum(1, 3, 5, 8, 6)
+	fmt.Println("the sum is", *s) // dereferenc s to get the values
+
+}
+
+func sum(values ...int) *int {
+	fmt.Println("values to be summed", values)
+
+	result := 0
+	for _, v := range values {
+		result += v
+	}
+
+	return &result
+}
+```
+the ability to return a local variable as a pointer, like here result is a pointer but it is scope is inside the function<br/>
+ because when we declare the result variable, it's actually declared on the execution stack of this function,
+which is just a special section of memory that's set aside for all of the operations
+that this function is going to be working with. So in this func Exit, then execution
+stack is destroyed, that memory is freed up.
+
+### Go memory allocation - new objects, pointers and escape analysis
+The pointer may escape to the heap, or it may not, depends on your use case. The compiler is pretty smart. 
+```go
+type Person struct {
+    b, c int
+}
+
+
+func foo(b, c int) int {
+    bob := &Person{b, c}
+    return bob.b
+}
+```
+It's all on the stack here, because even though bob is a pointer, it doesn't escape this function's scope.
+
+However, if we consider a slight modification:
+```go
+var globalBob *Person
+
+func foo(b, c int) int {
+    bob := &Person{b, c}
+    globalBob = bob
+    return bob.b
+}
+```
+Then bob escapes to heap
+
+
+* Named return Value
+```go
+func main() {
+	s := sum(1, 3, 5, 8, 6)
+	fmt.Println("the sum is", s)
+
+}
+
+func sum(values ...int) (result int) {
+	fmt.Println("the values to be summed", values)
+
+	for _, v := range values {
+		result += v
+	}
+	return
+}
+```
+we don't have to do the maintenance of instantiating, this result variable
 
 
 
+* Multipe Return values from function
+to demo this, see this example
+```go
+func main() {
+	d := divide(5.0, 3.0)
+	fmt.Println(d)
+}
 
+func divide(a, b float64) float64 {
+	return a / b
+}
+```
+` output : 1.6666666666666667 `  as expect <br/>
+ But what happens if I pass in a zero here. Now when I run this, I get an unknown result, I get a positive infinity result. And I can't
+work with that in my application. So I'm going to probably cause some sort of a failure down
+the line. the only thing we could do is  panic the application.  But keep in mind when we talk about control flow and go, we don't
+want to panic our application as a general course of action, because panicking means the application cannot continue. 
 
+it's reasonable to assume that we might pass zero, what we actually want to do is return
+an error back letting the calling function know something that they asked it to do wasn'table to be done properly. we're actually going to add a second
+return variable. So to do that, we're going to add a print here. And we're going to return an object of type error
+```go
+package main
 
+import (
+	"errors"
+	"fmt"
+	"strings"
+)
 
+func capitalize(name string) (string, int, error) {
+	handle := func(err error) (string, int, error) {
+		return "", 0, err
+	}
 
+	if name == "" {
+		return handle(errors.New("no name provided"))
+	}
 
+	return strings.ToTitle(name), len(name), nil
+}
 
+func main() {
+	name, size, err := capitalize("sammy")
+	if err != nil {
+		fmt.Println("An error occurred:", err)
+	}
 
+	fmt.Printf("Capitalized name: %s, length: %d", name, size)
+}
+```
+```
+output
+Capitalized name: SAMMY, length: 5
+```
+Here we use the 2 different return values from the call with multiple assignment. if you only want a subset of the returned values, use the blank identifier _
 
+```go
 
+func vals() (int, int) {
+	return 3, 7
+}
 
+func main() {
 
+	a, b := vals()
+	fmt.Println(a)
+	fmt.Println(b)
 
+	_, c := vals()
+	fmt.Println(c)
+}
+```
 
+```go
+package main
 
+import (
+	"fmt"
+)
 
+func divide(a, b float64) (float64, error) {
 
+	if b == 0 {
+		return 0.0, fmt.Errorf(" cannot divide by zero")
+	}
 
+	return a / b, nil
+}
 
+func main() {
+	result, err := divide(3.0, 0.0)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(result)
+}
+```
+
+* #### anonymous functions
+. Functions are first-class citizens in Golang. What this means is that you can not only use function declarations as just reusable code blocks but you can also assign functions to variables, use functions as parameters on other functions, and even return functions from other functions. This is achieved using function literals which are also known as anonymous functions.
+```go
+func main() {
+	fmt.Println("Hello from main!")
+	func() {
+		fmt.Println("Hello from an anonymous function!")
+	}()
+}
+```
+1.Passing arguments
+You can pass arguments to these anonymous functions.
+```go
+func main() {
+	fmt.Println("Hello from main!")
+	func(version float64) {
+		fmt.Printf("Hello from an anonymous function in Go language %.2f!", version)
+	}(1.15)
+}
+```
+2. Assigning functions to variables
+```go
+
+func main() {
+	fmt.Println("Hello from main!")
+	f := func(version float64) {
+		fmt.Printf("Hello from an anonymous function in Go language %.2f!", version)
+	}
+
+	f(1.15)
+}
+```
+3. Custom function types
+> In GO, the function is also a type. Two functions will be of the same type if<br/>
+They have the same number of arguments with each argument is of the same type<br/>
+They have the same number of return values and each return value is of the same type
+```go
+type concat func(fName, lName string) string
+
+func main() {
+	var s concat = func(fName, lName string) string {
+		msg := fmt.Sprintf("%s %s rocks!", fName, lName)
+		return msg
+	}
+
+	fmt.Println(s("Go", "Language"))
+	fmt.Printf("%T", s)
+}
+```
+```go
+type area func(int, int) int
+
+func main() {
+	var areaF area = func(a, b int) int {
+		return a * b
+	}
+
+	// call inside a function as arg
+	display(2, 3, areaF)
+
+	// another call 
+	fmt.Println(" new Area is:", areaF(2, 5))
+}
+
+func display(x, y int, a area) {
+	fmt.Printf("Area is: %d\n", a(x, y))
+}
+```
+
+In this example also we create a user-defined function type area. Then we create a function getAreaFunc() which returns the function of type area
+```go
+package main
+
+import "fmt"
+
+type area func(int, int) int
+
+func main() {
+	areaF := getAreaFunc()
+	display(2, 3, areaF)
+
+}
+
+func display(x, y int, a area) {
+	fmt.Printf("Area is: %d\n", a(x, y))
+}
+
+func getAreaFunc() area {
+	return func(x, y int) int {
+		return x * y
+	}
+}
+```
 
 
 
