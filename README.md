@@ -2326,21 +2326,256 @@ func getAreaFunc() area {
 	}
 }
 ```
+4. methods
+A method is a function with a special receiver argument.<br/>
+In this example, the Abs method has a receiver of type Vertex named v
+```go
+
+type Vertex struct {
+	X, Y float64
+}
+
+func (v Vertex) Abs() float64 {
+	return math.Sqrt(v.X*v.X + v.Y*v.Y)
+}
+
+func main() {
+	v := Vertex{3, 4}
+	fmt.Println(v.Abs())
+}
+```
+You can declare a method on non-struct types, too.
+```go
+
+type myFloat float64
+
+func (f myFloat) Abs() float64 {
+	if f < 0 {
+		return float64(-f)
+	}
+	return float64(f)
+}
+
+func main() {
+	f := myFloat(-math.Sqrt2)
+	fmt.Println(f.Abs())
+}
+```
+
+Pointer receivers
+```go
+
+type Vertex struct {
+	X, Y float64
+}
+
+func (v Vertex) Abs() float64 {
+	return math.Sqrt(v.X*v.X + v.Y*v.Y)
+}
+
+func (v *Vertex) Scale(f float64) {
+	v.X = v.X * f
+	v.Y = v.Y * f
+}
+
+func main() {
+	v := Vertex{3, 4}
+	v.Scale(10)
+	fmt.Println(v.Abs())
+}
+```
+```
+output
+50
+* scale 10: x=900, y=1600
+because v is a pointer to the vertex it points to the new values
+* sqrt 2500=50
+
+```
 
 
+---
+## Interfaces
+* basics
+* composing interfaces
+* type conversion
+	- the empty interfaces
+	- type switches
+* impementing with values vs pointers
+* best practices
+
+interfaces describe behaviors.  storing method definitions
 
 
+writer interface <br/>
+the way this works is anything that implements this interface is going to take in that slice
+of bytes, write it to something that something might be the console, it might be a TCP connection,
+it might be the file system, we don't know, we just know that we're writing a slice of bytes to something. And then the integer and error that get returned.
+the error is there in case something goes wrong with the write operation. And the integer is normally the number of bytes written. 
+```go
+
+type Writer interface {
+	// accept input slice of type byte, and return int and err
+	write(data []byte) (int, error)
+}
+```
+ now that we have the interface defined, let's go ahead and implement it. So we're going to implement this with a console writer implementation, and that'll be a struct.
+
+I've got a method on console writer called write. So it's
+got the same name as writer interface, it's accepting a slice of bytes, and it's
+returning an integer and an error. Now the implementation is whatever I want it to be.
+Now, in this case, all I'm going to do is convert that byte slice into a string and printed onto the console
+
+```go
+type ConsoleWriter struct{}
+
+func (cw ConsoleWriter) write(data []byte) (int, error) {
+	n, err := fmt.Println(string(data))
+	return n, err
+}
+```
+
+the W variable is holding a writer, which is something that implements the writer interface.
+
+```go
+	var w Writer = ConsoleWriter{}
+	w.write([]byte("hello world"))
+```
+ So when I call the write method, I know how to call that because that's defined by the interface. But I don't actually know
+in my main function, what's being written to, that's the responsibility of the actual
+implementation. So I could replace this with a TCP writer, I could replace it with a file
+writer, I could replace it with any other kind of writer. And so I get what's called a** polymorphic behavior**
+
+* this the whole example
+```go
+package main
+
+import "fmt"
+
+func main() {
+	var w Writer = ConsoleWriter{}
+	w.write([]byte("hello world"))
+}
+
+type Writer interface {
+	// accept input slice of type byte, and return int and err
+	write(data []byte) (int, error)
+}
+
+type ConsoleWriter struct{}
+
+func (cw ConsoleWriter) write(data []byte) (int, error) {
+	n, err := fmt.Println(string(data))
+	return n, err
+}
+```
+interface called incrementer. And that increment is going to be a method that only returns an integer, so it's going to increment something.
+<br/>I defined the type alias for an integer called an Intcounter.
+And then a method to that custom type that's going to be my implementation for the incrementer interface.  what I'm doing, I'm actually
+incrementing. The type itself, since I've got a type alias for an integer, it's a number, so I can go ahead and increment that.
+So I've actually got a type defined on an integer, and the integer itself is storing the data that the method is using.
+
+```go
+
+func main() {
+	myInt := IntCounter(3)
+
+	var inc Incrementer = &myInt
+
+	for i := 0; i < 6; i = i + 1 {
+		fmt.Println(inc.Increment())
+	}
+}
+
+type Incrementer interface {
+	Increment() int
+}
+
+type IntCounter int
+
+func (ic *IntCounter) Increment() int {
+	*ic++
+	return int(*ic)
+}
+```
+> intgers and their alias are passed by value, so to increment its identifier make a pointer if you want to keep modifying the new values
 
 
+#### compose interfaces together
+one of the keys to scalability
+```go
+package main
 
+import (
+	"bytes"
+	"fmt"
+)
 
+func main() {
 
+	var wc WriterCloser = NewBufferedWriterCloser()
 
+	wc.Write([]byte("hello im hamo doing composite interfaces implementation "))
+	wc.Close()
+}
 
+type Writer interface {
+	Write(buf []byte) (int, error)
+}
 
+type Closer interface {
+	Close() error
+}
 
+type WriterCloser interface {
+	Writer
+	Closer
+}
 
+type BufferedWriterCloser struct {
+	buffer *bytes.Buffer
+}
 
+func (bwc *BufferedWriterCloser) Write(data []byte) (int, error) {
+	n, err := bwc.buffer.Write(data)
+	if err != nil {
+		return 0, err
+	}
+
+	v := make([]byte, 8)
+	for bwc.buffer.Len() > 8 {
+		_, err := bwc.buffer.Read(v)
+		if err != nil {
+			return 0, err
+		}
+		_, err = fmt.Println(string(v))
+		if err != nil {
+			return 0, err
+		}
+
+	}
+
+	return n, nil
+}
+
+func (bwc *BufferedWriterCloser) Close() error {
+	for bwc.buffer.Len() > 0 {
+		data := bwc.buffer.Next(8)
+		_, err := fmt.Println(string(data))
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func NewBufferedWriterCloser() *BufferedWriterCloser {
+	return &BufferedWriterCloser{
+		buffer: bytes.NewBuffer([]byte{}),
+	}
+}
+```
 
 
 
