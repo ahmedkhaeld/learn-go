@@ -44,5 +44,5 @@ func main() {
 }
 
 // when using race flag to demonstrate it is actually a race condition
-// $ go run -race main.go
+// $ go run -race http-srv.go
 // WARNING: DATA RACE
