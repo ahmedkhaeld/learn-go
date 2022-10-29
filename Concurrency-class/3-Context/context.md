@@ -148,7 +148,7 @@ type result struct {
 func get(ctx context.Context, url string, ch chan<- result) {
 	start := time.Now()
 	// create a req that contains the ctx and url,
-	//this will inject a timeout into the http Get request
+	//this will inject a timeout into the 15.http Get request
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 
 	if resp, err := http.DefaultClient.Do(req); err != nil {

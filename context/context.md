@@ -188,7 +188,7 @@ import (
 )
 
 func main() {
-	res, err := http.Get("http://localhost:8080")
+	res, err := http.Get("15.http://localhost:8080")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -232,7 +232,7 @@ func main() {
 
 	// separate the request into two steps
 	// 1. create the request
-	req, err := http.NewRequest(http.MethodGet, "http://localhost:8080", nil)
+	req, err := http.NewRequest(http.MethodGet, "15.http://localhost:8080", nil)
 	if err != nil {
 		log.Fatalln(err)
 	}

@@ -24,9 +24,9 @@ func main() {
 // task1 workload is make a request to server
 func task1(wg *sync.WaitGroup) {
 	defer wg.Done()
-	_, err := http.Get("http://localhost:8080")
+	_, err := http.Get("15.http://localhost:8080")
 	if err != nil {
-		log.Fatalf("could not make http request: %v", err)
+		log.Fatalf("could not make 15.http request: %v", err)
 	}
 	fmt.Println("task 1: done")
 }

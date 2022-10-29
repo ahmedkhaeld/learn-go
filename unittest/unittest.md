@@ -206,7 +206,7 @@ func TestDoubleHandler(t *testing.T) {
 		t.Fatalf("could not created request: %v", err)
 	}
 
-	// rec provide implementation of http.ResponseWriter that
+	// rec provide implementation of 15.http.ResponseWriter that
 	//// records response and its mutations for later inspection in tests.
 	rec := httptest.NewRecorder()
 
