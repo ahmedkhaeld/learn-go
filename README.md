@@ -120,8 +120,8 @@ func main() {
 <div style="page-break-after: always;"></div>
 
 ## how to convert var type
-* show case to convert an integer to string
-1. this will output the string with 27 in the unicode not a 27 conveted to string type
+* showcase to convert an integer to string
+1. this will output the string with 27 in the unicode not a 27 converted to string type
 
 ```go
 package main
@@ -163,7 +163,7 @@ func main() {
 }
 ```
 
-arithmatic ops
+* Arithmetic operation
 ```go
 package main
 
@@ -178,10 +178,26 @@ func main() {
 	fmt.Printf("%v\t, %T, %T\t\n", a + b, a ,b)      // 13
 	fmt.Printf("%v\t, %T, %T\t\n", a - b, a ,b)     // 7
 	fmt.Printf("%v\t, %T, %T\t\n", a * b, a ,b)    // 30
-	fmt.Printf("%v\t, %T, %T\t\n", a / b, a ,b)   // 3 dops the float because it the two operands are int
+	fmt.Printf("%v\t, %T, %T\t\n", a / b, a ,b)   // 3 drops the float because it is the two operands are int
 	fmt.Printf("%v\t, %T, %T\t\n", a % b, a ,b)  //1  pick up the remainder
 }
 ```
+* Understanding the Remainder Operator
+
+Go provides the % operator, which returns the remainder when one integer value is divided by another.
+the Go remainder operator can return negative values.
+
+````go
+func main() {
+	posResult := 3 % 2
+	negResult := -3 % 2
+	absResult := math.Abs(float64(negResult))
+
+	fmt.Println(posResult) // 1
+	fmt.Println(negResult) // -1
+	fmt.Println(absResult) // 1
+}
+````
 
 if two var one is int and the second is int8 you have to type convert
 ```go
@@ -199,9 +215,193 @@ func main() {
 	
 }
 ```
+
+* Overflow
+
+Go allows integer values to overflow by wrapping around, rather than reporting an error. Floating-point
+values overflow to positive or negative infinity.
+
+```go
+
+func main() {
+	//understand overflow:
+
+	var intVal = math.MaxInt64
+	var floatVal = math.MaxFloat64
+
+	fmt.Println(intVal * 2)                // -2
+	fmt.Println(floatVal * 2)              //+Inf
+	fmt.Println(math.IsInf(floatVal*2, 0)) //true
+	//IsInf report if num is infinity
+}
+
+```
+
+* Understanding the Limitations of Explicit Conversion
+
+Explicit conversions can be used only when the value can be represented in the target type. This means
+you can convert between numeric types and between strings and runes, but other combinations, such as
+converting int values to bool values, are not supported.
+
+```go
+func main() {
+
+	kayak := 275
+	socerBall := 19.50
+
+	total := kayak + int(socerBall) // 275 + 19
+	fmt.Println(total)
+
+	fmt.Println(int8(total)) //38
+	//converts the int into an int8
+	//(which is the type for a signed integer allocated 8 bits
+	//of storage
+	
+	//The int8 used in the second explicit conversion 
+	//is too small to represent the int value 294 and so the
+	//variable overflows
+}
+```
+
+* Parsing from Strings
+
+The Go standard library includes the strconv package, which provides functions for converting string
+values to the other basic data types.
+
+```go
+package main
+
+import (
+	"fmt"
+	"strconv"
+)
+
+func main() {
+	v1 := "true"
+	v2 := "false"
+	v3 := "not sure"
+
+	bool1, b1err := strconv.ParseBool(v1)
+	bool2, b2err := strconv.ParseBool(v2)
+	bool3, b3err := strconv.ParseBool(v3)
+
+	fmt.Println("Bool 1:", bool1, b1err)
+	fmt.Println("Bool 2: ", bool2, b2err)
+	fmt.Println("Bool 3:", bool3, b3err)
+}
+
+//Bool 1: true <nil>
+//Bool 2:  false <nil>
+//Bool 3: false strconv.ParseBool: parsing "not sure": invalid syntax
+```
+
+* Parsing Integers
+
+```go
+package main
+
+import (
+	"fmt"
+	"strconv"
+)
+
+func main() {
+	v1 := "100"
+	int1, err := strconv.ParseInt(v1, 0, 8)
+
+	if err != nil {
+		fmt.Println("Cannot parse", v1)
+	} else {
+		fmt.Println("Parsed value", int1)
+	}
+}
+//Parsed value 100
+```
+
+
+
+```go
+package main
+
+import (
+	"fmt"
+	"strconv"
+)
+
+func main() {
+	v1 := "500"
+	int1, err := strconv.ParseInt(v1, 0, 8)
+
+	if err != nil {
+		fmt.Println("Cannot parse", v1, err)
+	} else {
+		fmt.Println("Parsed value", int1)
+	}
+}
+
+//Cannot parse 500 strconv.ParseInt: 
+//parsing "500": value out of range
+
+```
+
+* Parsing Binary, Octal, and Hexadecimal integers
+
+The base argument received by the Parse<type> functions allows
+non-decimal numbers strings to be parsed
+
+
+The string value "100" can be parsed into the decimal value 100, but it could also represent the binary
+value 4. Using the second argument to the ParseInt function, I can specify a base of 2, which means the
+string will be interpreted as a binary value. Compile and execute the code, and you will see a decimal
+representation of the number parsed from the binary string
+```go
+package main
+
+import (
+	"fmt"
+	"strconv"
+)
+
+func main() {
+	v1 := "100"
+
+	int1, err := strconv.ParseInt(v1, 2, 8)
+
+	if err != nil {
+		fmt.Println("Cannot parse ", v1, err)
+	} else {
+		smallInt := int8(int1)
+		fmt.Println("Parsed value:", smallInt)
+	}
+}
+//Parsed value: 4
+```
+
+```go
+package main
+
+import (
+	"fmt"
+	"strconv"
+)
+
+func main() {
+	v1 := "0b1100100"
+
+	int1, err := strconv.ParseInt(v1, 0, 8)
+
+	if err != nil {
+		fmt.Println("Cannot parse ", v1, err)
+	} else {
+		smallInt := int8(int1)
+		fmt.Println("Parsed value:", smallInt)
+	}
+}
+//Parsed value: 100
+```
 <div style="page-break-after: always;"></div>
 
-wisbit operations
+bitwise operations
 ```go
 
 package main
@@ -223,7 +423,18 @@ func main() {
 }
 ```
 shifting means 2^x : base 2 to the power x<br/>
-shiftleft means multiply, shiftright means divid
+shift-left means multiply, shift-right means divide
+
+```
+shift left one position = multiply by 2    
+  number<<postion  10<<1   10*2 = 20  [0000 1010] shift left one gives [0001 0100] 
+shift left two positions = multiply by 4  
+  4<<2   4*4 = 16   [00000100] shift left two gives [0001 0000]         
+shift left three positions = multiply by 8 
+shift left four positions = multiply by 16
+shift left five positions = multiply by 32
+```
+
 ```go
 package main
 
@@ -234,13 +445,13 @@ import (
 
 func main() {
 	a :=8  //2^3=8
-	fmt.Println(a<<2)  //shiftleft means multiply 2^3 * 2^2=2^5 =32
-	fmt.Println(a>>3)  //shiftright mean divid   2^3 / 2^3 =2^1 =1
+	fmt.Println(a<<2)  //shift-left means multiply 2^3 * 2^2=2^5 =32
+	fmt.Println(a>>3)  //shift-right means divide   2^3 / 2^3 =2^1 =1
 	
 	
 }
 ```
-> shifting and remainder operators are only with intgers
+> shifting and remainder operators are only with integers
 
 ## complex numbers
 there are two types of complex numbers. There's complex 64, and complex 128. go undersand the equations of the complex numbers
@@ -311,7 +522,7 @@ func main() {
 ```
 ## Texting types
 * String type
-  represent UTf-8 charactars
+  represent UTF-8 characters
 ```go
 
 func main() {
@@ -328,7 +539,7 @@ func main() {
 	fmt.Printf("%v, %T\n", s[2], s[2])  // 105, uint8
 }
 ```
->  * what the heck happened there? Well, what's happening is that strings in go are actually aliases for bytes.<br/>
+>  * what the happened there? Well, what's happening is that strings in go are actually aliases for bytes.<br/>
 >  * strings are generally immutable.<br/>
 >  * there is one arithmetic or pseudo arithmetic operation that we can do with strings, and that is string concatenation. Or in simpler terms, we can add strings together.
 ```go
@@ -347,7 +558,7 @@ func main() {
 }
 ```
 > [116 104 105 115 32 97 32 115 116 114 105 110 103], []uint8 <br/>
-> we actually get this as a string comes out as the ASCII values, or the UTF valuesfor each character in that string.
+> we actually get this as a string comes out as the ASCII values, or the UTF values for each character in that string.
 
 >why would you use this one? It's a very
 good question. A lot of the functions that we're going to use in go actually work with
@@ -386,11 +597,97 @@ characteristic of a constant is that it has to be assignable at compile time. yo
 func main() {
 	
 	const myConst float64=math.Sin(1.57)
-	fmt.Printf("%v, %T\n", myConst, myConst) // get error
+	fmt.Printf("%v, %T\n", myConst, myConst) // gets an error
 }
 ```
+
+* Understanding Untyped Constants
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	const price float32 = 275.00
+	const tax float32 = 27.50
+	const quantity int = 2
+	fmt.Println("Total:", quantity*(price+tax))
+}
+//invalid operation: mismatched types int and float32
+```
+
+The untyped constant feature makes constants easier to work with because the Go compiler will perform limited
+automatic conversion
+```go
+package main
+
+import "fmt"
+
+func main() {
+	const price float32 = 275.00
+	const tax float32 = 27.50
+	const quantity = 2
+	fmt.Println("Total:", quantity*(price+tax))
+}
+//Total: 605
+```
 ## Enums
-what is Iota? Well, Iota is a counter that we can use when we're creating what are called enumerated constants.
+
+The language (at least in its version 1.17) does not have specific enumeration types.
+However, we can still build a type that offers the same features as enums.
+
+* Building a type that can be used “as” enum
+
+Imagine that you have a function that handles HTTP requests
+
+In this function, you expect the user to give you an HTTP method, and you expect to handle a predefined set of methods. 
+Your function can have a parameter of type HTTPMethod (instead of int) :
+
+```go
+package main
+
+import "fmt" 
+
+imports "fmt"
+type HTTPMethod int
+
+const (
+  GET     HTTPMethod = 0
+  POST    HTTPMethod = 1
+  PUT     HTTPMethod = 2
+  DELETE  HTTPMethod = 3
+  PATCH   HTTPMethod = 4
+  HEAD    HTTPMethod = 5
+  OPTIONS HTTPMethod = 6
+  TRACE   HTTPMethod = 7
+  CONNECT HTTPMethod = 8
+)
+
+func handle(method HTTPMethod, headers map[string]string, uri string) {
+  if method == GET {
+    fmt.Println("the method is get")
+  } else {
+    fmt.Println("the method is not get")
+  }
+}
+
+
+ type HTTPRequest struct {
+  method  HTTPMethod
+  headers map[string]string
+  uri     string
+}
+func main() {
+  r := HTTPRequest{method: GET, headers: map[string]string{"Accept": "application/json"}, uri: "/prices"}
+  fmt.Println(r)
+}
+
+```
+what is Iota? <br>
+Well, Iota is a counter that we can use when we're creating what are called enumerated constants.<br>
+can be used to create a series of successive untyped integer constants without
+needing to assign individual values to them
 ```go
 package main
 
@@ -427,6 +724,32 @@ func main() {
 	fmt.Printf("%v\n",specialistType==catSpecialist)
 }
 ```
+```go
+const (
+    GET HTTPMethod = iota
+    POST
+    PUT
+    DELETE
+    PATCH
+    HEAD
+    OPTIONS
+    TRACE
+    CONNECT
+)
+
+type TestEnum int
+//  iota reset again to zero because it is a different scope
+const (
+    First TestEnum = iota * 3
+    Second
+)
+```
+
+```go
+
+```
+
+
 we can use this underscore symbol if we don't care about zero, then we don't have any reason
 to assign the memory to it.<br/>
 And basically, what that tells the compiler
@@ -434,7 +757,7 @@ is yes, I know you're going to generate a value here, but I don't care what it i
 ahead and throw that away.
 
 
-this can be valuable if you need some kind of a fixed offset.
+this can be valuable if you need some kind of fixed offset.
 ```go
 package main
 
@@ -458,41 +781,47 @@ func main() {
 ```
 
 use case
-shifleft is essentially multiply by 2 to the power of x
+shift-left is essentially multiply by 2 to the power of x
 
 ```go
 package main
 
 import "fmt"
 
-const(
-	_ =iota  // igonre first value by assigning to blank identifier
-	KB=1<<(10*iota)
-	MB
-	GB
-	TB
-	PB
-	EB
-	ZB
-	YB
+const (
+  _  = iota // ignore first value by assigning to blank identifier
+  KB = 1 << (10 * iota)
+  MB
+  GB
+  TB
+  PB
+  EB
+  ZB
+  YB
 )
 
 func main() {
-	fileSize :=4000000000.
-	fmt.Printf("%.2fGB", fileSize/GB)
+  fileSize := 4000000000.
+  fmt.Printf("%.2fMB", fileSize/MB)
+  fmt.Printf("%.2fGB \n", fileSize/GB)
+
 }
+
+//3814.70MB
+//3.73GB 
+
 ```
-> - =iota is zero<br/>
-    > KB=1<<0 MEANS NO SHIFTING<BR/>
-    > MB=1<<10   MEANS 1*2^10                   <BR/>
-    > GB=1<<100  MEANS 1*2^100                      <BR/>
-    > TB=1<<1000 MEANS 1*2^1000
+    _ =iota is zero
+     KB=1<<(10*1)   means 2^10 * 1 =1024                    
+     MB=1<<(10*2)   MEANS 2^20 * 1 = 1,048,576              
+     GB=1<<(10*3)   MEANS 2^30 * 1 = 1,073,741,824          
+     TB=1<<(10*4)   MEANS 2^40 * 1 = 1073741823.9999983
 
 <div style="page-break-after: always;"></div>
 
-* another use case<br/>
+*  **Bit Masking**<br/>
   let's just say that we've got an application and that application has
-  users and those users have certain roles. So inside of this constant block, here, I'm
+  users and those users have certain roles. So inside this constant block, here, I'm
   defining various roles that we can have. So for example, you might be an admin, you might
   be at the headquarters or out in the field somewhere, you might be able to see the financials
   or see the monetary values. And then there may be some regional roles. So can you see
@@ -528,7 +857,7 @@ func main() {
   
 	fmt.Printf("%b\n", roles)   // binary representation of ORing the three active roles and storing them in one variable
   
-	// check if a user is admin or any other role to check against using bitwise bitmask mathimatics
+	// check if a user is admin or any other role to check against using bitwise bitmask mathematics
 	fmt.Printf("Is Admin? %v\n", isAdmin&roles == isAdmin)
   
 	fmt.Printf("Can see Africa? %v", canSeeAfrica&roles == canSeeAfrica)
@@ -536,8 +865,177 @@ func main() {
 }
 ```
 
+```go
+package main
+
+import "fmt"
+
+//Bits is a set of Flags 
+type Bits uint8
+
+const (
+  F0 Bits = 1 << iota // iota = 0 means no shifting      0001= 1
+  F1                  //  shift by 1                     0010= 2
+  F2                  // shift by 2                      0100= 4
+)
+
+func Set(b, flag Bits) Bits    { return b | flag }
+func Clear(b, flag Bits) Bits  { return b &^ flag }
+func Toggle(b, flag Bits) Bits { return b ^ flag }
+func Has(b, flag Bits) bool    { return b&flag != 0 }
+
+func main() {
+  var b Bits
+
+  b = Set(b, F0)
+  fmt.Println("Set b to", b)
+
+  b = Toggle(b, F2)
+  fmt.Println("toggled b is", b)
+
+  for i, flag := range []Bits{F0, F1, F2} {
+    fmt.Println(i, Has(b, flag))
+  }
+}
+
+
+```
+
+
+
+
+
+
+You write a server for a massively multiplayer online role-playing game<br>
+In the game, players collect keys, and you want to design how to store the set of keys each player has.<br>
+
+As an example, imagine the set of keys are copper, jade and crystal. <br>
+You consider the following options for storing a player key sets:<br>
+  - []string
+  - map[string]bool
+
+Both options will work, but did you consider a third option of using a bitmask? Using a _bitmask_ will make storing and processing keys more efficient. Once you learn the mechanics, it will be readable and maintainable as well
+
+####### Numbers as bit 
+| 2⁷  | 2⁶  | 2⁵  | 2⁴  | 2³  | 2²  | 2¹  | 2⁰  |
+|-----|-----|-----|-----|-----|-----|-----|-----|
+| 128 | 64  | 32  | 16  | 8   | 4   | 2   | 1   |
+
+e.g: 00001101 = 13 <br>
+Note: You can use the %b verb to print the binary representation of a number. `fmt.Printf("%08b\n", 13)`
+will print 00001101.
+
+To support 3 keys in the application, we only need 3 bits. This is great because that means we only need to allocate 1 byte of memory.
+
+```go
+package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+// KeySet is a set of keys in the game.
+type KeySet byte
+
+const (
+	Captain KeySet = 1 << iota // 1
+	Leader                     // 2
+	Striker                    // 4
+	maxKey                     // 8
+)
+
+func (k KeySet) String() string {
+	if k >= maxKey {
+		return fmt.Sprintf("<unknown key: %d", k)
+
+	}
+
+	switch k {
+	case Captain:
+		return "captain"
+	case Leader:
+		return "leader"
+	case Striker:
+		return "striker"
+
+	}
+
+	// <<= is a lift shift and assignment operator key = key << 1
+	var names []string
+	for key := Captain; key < maxKey; key <<= 1 {
+		if k&key != 0 {
+			names = append(names, key.String())
+		}
+	}
+	return strings.Join(names, "|")
+}
+
+//Player is a player in the game
+type Player struct {
+	Name string
+	Keys KeySet
+}
+
+func (p *Player) AddKey(key KeySet) {
+	// p.keys = p.keys | key bitwise OR and assignment
+	p.Keys |= key
+}
+
+// HasKey returns true if player has a key
+func (p *Player) HasKey(key KeySet) bool {
+	return p.Keys&key != 0
+}
+
+//RemoveKey removes key from player
+func (p *Player) RemoveKey(key KeySet) {
+	// p,Keys AND with NOT key
+	p.Keys &= ^key
+	fmt.Printf("name is %s, key removed", p.Name)
+}
+
+func main() {
+
+	var p Player
+	p.Name = "hamo"
+	p.AddKey(5)
+    //name is hamo, key is captain|striker
+	fmt.Printf("name is %s, key is %s\n", p.Name, p.Keys)
+	p.RemoveKey(4)
+	//name is hamo, key removed
+
+}
+
+```
+explain the for loop when the k is over 4 and under the limit
+```go
+//input k is 5 
+
+var names []string
+// shift left is the incrementer to the for loop
+ key = key << 1 mean multiply key by 2
+ 
+ 
+ // init the key with 1 
+ // 1 & 5 is not zero, then add key "captain" to the names
+ // increment the key by this key= 1<<1  = 2
+ // key  2 AND k  5  is equal to zero, so do not add 2 "leader" to the names
+ // increment the key by this key = 2<<1 = 4 
+ // key 4 AND k 5 is not equal to zero so append the 4 "striker" to the names
+ // increment the key by this key = 4<<1 = 8 is over the limit so stop the loop 
+for key := Captain; key < maxKey; key <<= 1 {
+if k&key != 0 {
+names = append(names, key.String())
+}
+}
+return strings.Join(names, "|")
+```
+
+
+
 
 ---
+
 ## Arrays
 * Creation
 * Built-in functions
@@ -1691,28 +2189,50 @@ re throw that panic, and the further management of that panic, higher up the cal
 * working with nil
 * types with internal pointers
 
-a variable holds two different informations, the address where he is located, and the value in that location
+a variable holds two different information, the address where it is located, and the value in that location
 
-> creating a pointer to reference a memeory address
+> creating a pointer to reference a memory address
 ```go
 func main() {
 	var a int = 42
-	var b *int = &a // declare pointer b to point to the address of a, so be is holding an address 
+	var b *int = &a // declare pointer b to point to the address of a, so b is holding an address 
 	fmt.Println(&a, b) // here &a accesss its address in memory, b here already assigned that address, so both have same address 
 
 }
+
+//0xc0000ba000 0xc0000ba000
+
 ```
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	first := 100
+	var second  = &first
+	first++
+	fmt.Println("First:", first)
+	fmt.Println("Second:", second)
+}
+
+//First: 101
+//Second: 0xc000010088
+
+```
+
 * before datatype means it declares a pointer to a memory address, like *int
-* before variable means, access the value, like *b , it access the value
+* before variable means, access the value, like *b , it accesses the value
 
 ```go
 
 func main() {
-	var a int = 42
-	var b *int = &a // b is a pointer to an address
+	var a  = 42
+	var b  = &a // b is a pointer to an address
 	fmt.Println(&a) // &a is access address of a
 
-	fmt.Println(*b) // * is dereferencing the pointer to access the value of a
+	fmt.Println(*b) // * is De-referencing the pointer to access the value of a
 
 	//changing the value in the memory location, where a is located
 	*b = 14
@@ -1762,21 +2282,21 @@ type myStruct struct {
 ```
 we can't use the object initialization syntax,
 we're just going to be able to initialize an empty object.
-the zero value of a pointer is nil,  the pointer that we don't intialize, it's going to be intialized to nil
+the zero value of a pointer is nil,  the pointer that we don't initialize, it's going to be initialized to nil
 So this is very important to check in your applications. Because if you're accepting pointers as arguments,
-it is best practice to see if that pointer is a nil pointer. Because if it is, then you're
+it is best practice seeing if that pointer is a nil pointer. Because if it is, then you're
 going to have to handle that in a different way.
 
 * how do we get to the underlying field of struct using a pointer
-  using a dereferencing  (*ms).foo  is equal to ms.foo straight forward no need to * between parentheses
+  using a de-referencing  (*ms).foo  is equal to ms.foo straight forward no need to * between parentheses
 
 **accessing the struct field to set its value after intializing myStruct using new**
 `new()` in golang doesn't initialize memory but it only zeroes the value and return the pointer,In other words it returns a pointer to a newly allocated zero value of type T.
 ```go
 func main() {
-	// new here create a m pointer of type map[string]int
+	// new here create an m pointer of type map[string]int
 	m := new(map[string]int)
-	// intialize the map
+	// initialize the map
 	m = &map[string]int{
 		"apple": 5,
 	}
@@ -1788,14 +2308,37 @@ func main() {
 ```
 ```go
 func main() {
-	ms := new(myStruct) // new creates a pointer to myStruct
-	ms.foo = 60 // this line equal to (*ms).foo=60
+	ms := new(myStruct) 
+	ms.foo = 60
 	fmt.Println(ms.foo)
 }
 type myStruct struct {
 	foo int
 }
 // 60
+```
+
+* Pointing at Pointers
+
+it is possible to create a pointer whose value is the memory
+address of another pointer
+```go
+package main
+
+import "fmt"
+
+func main() {
+	first := 100
+	second := &first
+	third := &second
+	fmt.Println(first)
+	fmt.Println(*second)
+	fmt.Println(**third)
+	//100
+	//100
+	//100
+}
+
 ```
 **how go handles variables when they're assigned one to another.**
 
