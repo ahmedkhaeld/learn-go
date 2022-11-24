@@ -916,7 +916,8 @@ You consider the following options for storing a player key sets:<br>
 
 Both options will work, but did you consider a third option of using a bitmask? Using a _bitmask_ will make storing and processing keys more efficient. Once you learn the mechanics, it will be readable and maintainable as well
 
-####### Numbers as bit 
+*  Numbers as bit 
+
 | 2⁷  | 2⁶  | 2⁵  | 2⁴  | 2³  | 2²  | 2¹  | 2⁰  |
 |-----|-----|-----|-----|-----|-----|-----|-----|
 | 128 | 64  | 32  | 16  | 8   | 4   | 2   | 1   |
